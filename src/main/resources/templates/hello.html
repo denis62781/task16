@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org"
+
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <title>Каталог товаров</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js"></script>
+</head>
+
+<body>
+
+<div class="fluid-container" th:fragment="navi(activeTab)">
+    <nav class="navbar fixed-top navbar-expand-lg navbar-dark bg-primary ">
+        <a class="navbar-brand" th:href="@{/}">Lab 16</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
+                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav">
+                <li class="nav-item" th:classappend="${activeTab == 'Home' ? 'active' : ''}">
+                    <a class="nav-link" th:href="@{/}">Главная страница<span
+                            class="sr-only">(current)</span></a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{'/addpage'}">Добавить товар<span
+                            class="sr-only">(current)</span></a>
+                </li>
+                <li sec:authorize="isAuthenticated()" class="nav-item" style="color: #dee2e6">
+                    <form th:action="@{/logout}" method="POST">
+
+                        <div style="left: 900px;width: 150px" class="input-group">
+                            <input type="submit" class="btn btn-danger" value="Выйти"/>
+
+                        </div>
+                    </form>
+                </li>
+                <div style="top: 8px;left: 300px;width: 200px;font-family: Gill Sans, sans-serif;" class="input-group">
+                    <li
+
+                            sec:authorize="isAuthenticated()" class="nav-item" style="color: #ffffff">
+                        Здравствуйте,
+                        <span sec:authentication="name"></span>
+
+                    </li>
+                </div>
+                <li sec:authorize="isAnonymous()" class="nav-item">
+                    <form class="align-middle" th:action="@{/authenticateTheUser}" method="POST">
+                        <div class="input-group-prepend">
+                            <div style="left: 600px;" class="input-group">
+                                <input id="pole1" class="form-control" type="text" placeholder="Логин" name="username"
+                                       aria-describedby="inputGroup-sizing-sm">
+                                <input class="form-control" type="text" placeholder="Пароль" name="password"
+                                       aria-describedby="inputGroup-sizing-sm"/>
+                                <button class="btn btn-secondary btn-sm" type="submit">Войти</button>
+                            </div>
+                        </div>
+                    </form>
+                </li>
+                <li></li>
+            </ul>
+        </div>
+    </nav>
+    <div class="visible-md" style="height:80px;"></div>
+</div>
+
+
+<h3>Топ три продукта</h3>
+<div class="containe">
+    <table class="table table-hover">
+        <thead>
+        <tr>
+            <th>Название товара</th>
+            <th sec:authorize="hasRole('USER')">Действия</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        <tr th:each="product : ${topproducts}">
+            <td th:text="${product.title}"/>
+            <td>
+                <a sec:authorize="hasRole('USER')" th:href="@{'/show_product/' + ${product.id}}" th:text="Просмотреть"/>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+
+<br><br>
+
+<h3>База продуктов</h3>
+<div class="containe">
+    <table class="table table-hover">
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Название товара</th>
+            <th>Цена</th>
+            <th sec:authorize="hasRole('USER')">Действия</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        <tr th:each="product : ${products}">
+            <td th:text="${product.id}"/>
+            <td th:text="${product.title}"/>
+            <td th:text="${product.price}"/>
+            <td>
+                <a sec:authorize="hasRole('USER')" th:href="@{'/show_product/' + ${product.id}}" th:text="Просмотреть"/>
+                <a sec:authorize="hasRole('ADMIN')" th:href="@{'/products/ch/' + ${product.id}}" th:text="Изменить"/>
+                <a sec:authorize="hasRole('ADMIN')" th:href="@{'/remove/' + ${product.id}}" th:text="Удалить"/>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+    <table>
+        <tr>
+            <td th:if="${numoerOfPage > 0}"
+                th:each="pageNumber : ${pageNumbers}">
+                <a th:href="@{'/products/?page='+${pageNumber+(-1)}}"
+                   th:text="${pageNumber}"></a>
+            </td>
+        </tr>
+    </table>
+</div>
+
+<form th:action="@{'/products/?minPrice=' + ${filter.minPrice}+'?maxPrice='+${filter.maxPrice}+'?text='+${filter.text}}"
+      th:object="${filter}" method="get"
+      class="form-horizontal">
+    <div class="Filter" sec:authorize="hasRole('USER')">
+        <table>
+            <caption>Фильтрация</caption>
+            <tr>
+                <th>Цена мин</th>
+                <th>Цена макс</th>
+                <th>Подстрока</th>
+                <th>Подтверждение</th>
+            </tr>
+            <tbody>
+
+            <tr>
+                <div style="margin-bottom: 25px" class="input-group">
+                    <span class="input-group-addon"><i class="glyphicon glyphicon-user"></i></span>
+                    <td><input th:field="*{minPrice}" th:value="*{minPrice}" placeholder="Min" class="form-control" type="number"></td>
+                </div>
+
+                <div style="margin-bottom: 25px" class="input-group">
+                    <span class="input-group-addon"><i class="glyphicon glyphicon-user"></i></span>
+                    <td><input th:field="*{maxPrice}" th:value="*{maxPrice}" name="Max" placeholder="*max" class="form-control"></td>
+                </div>
+
+                <div style="margin-bottom: 25px" class="input-group">
+                    <span class="input-group-addon"><i class="glyphicon glyphicon-user"></i></span>
+                    <td><input th:field="*{text}" th:value="*{text}" name="Substring" placeholder="*text" class="form-control"></td>
+                </div>
+
+                <div style="margin-top: 10px" class="form-group">
+                    <div class="col-sm-6 controls">
+                        <td><input type="submit" value="Фильтровать" class="btn btn-primary"></td>
+                    </div>
+                </div>
+            </tr>
+
+            </tbody>
+        </table>
+    </div>
+</form>
+
+<form th:action="@{/addpage}" sec:authorize="hasRole('ADMIN')">
+    <div class="Add">
+        <table>
+            <tbody>
+            <tr>
+                <td><input type="submit" value="Добавить товар" class="btn btn-primary"></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</form>
+
+<form th:action="@{'/clear'}" sec:authorize="hasRole('USER')">
+    <div class="Clear">
+        <table>
+            <tbody>
+            <tr>
+                <td><input type="submit" value="Очистить фильтр" class="btn btn-primary"></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</form>
+</body>
+</html>
